@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Futuristic 3D Scroll</title>
+    <style>
+        /* Base Reset */
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        body {
+            background-color: #050505;
+            color: #ffffff;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow-x: hidden;
+        }
+
+        /* 3D Canvas Background */
+        #bg-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: -1;
+        }
+
+        /* Scrollable Content */
+        .content {
+            position: relative;
+            z-index: 1;
+        }
+
+        section {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 2rem;
+        }
+
+        /* Futuristic Glassmorphism UI */
+        .glass-panel {
+            background: rgba(15, 15, 20, 0.6);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(0, 255, 255, 0.2);
+            padding: 3rem;
+            border-radius: 15px;
+            box-shadow: 0 0 30px rgba(0, 255, 255, 0.1);
+            max-width: 600px;
+            transform: perspective(1000px) rotateX(0deg);
+            transition: transform 0.3s ease;
+        }
+
+        .glass-panel:hover {
+            transform: perspective(1000px) rotateX(2deg) rotateY(2deg);
+        }
+
+        /* Neon Typography */
+        h1 {
+            font-size: 3.5rem;
+            margin-bottom: 1rem;
+            color: #fff;
+            text-shadow: 0 0 5px #00e5ff, 0 0 10px #00e5ff;
+        }
+
+        p {
+            font-size: 1.2rem;
+            line-height: 1.6;
+            color: #b0bec5;
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="bg-canvas"></canvas>
+
+    <div class="content">
+        <section>
+            <div class="glass-panel">
+                <h1>Enter the Void</h1>
+                <p>Scroll down to fly through the 3D space.</p>
+            </div>
+        </section>
+
+        <section>
+            <div class="glass-panel">
+                <h1>System Active</h1>
+                <p>GSAP is currently tracking your scrollbar and moving the Three.js camera forward.</p>
+            </div>
+        </section>
+
+        <section>
+            <div class="glass-panel">
+                <h1>Future Ready</h1>
+                <p>You can replace these particles with complex 3D models when you are ready to expand.</p>
+            </div>
+        </section>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+
+    <script>
+        // --- 1. SETUP THREE.JS SCENE ---
+        const canvas = document.querySelector('#bg-canvas');
+        const scene = new THREE.Scene();
+        
+        // Setup Camera
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.z = 5;
+
+        // Setup Renderer
+        const renderer = new THREE.WebGLRenderer({ canvas: canvas, alpha: true, antialias: false });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); // Performance optimization
+
+        // --- 2. CREATE 3D OBJECTS (Cyber Particles) ---
+        const particlesGeometry = new THREE.BufferGeometry();
+        const particlesCount = 700; // Kept low for performance
+        const posArray = new Float32Array(particlesCount * 3);
+
+        for(let i = 0; i < particlesCount * 3; i++) {
+            // Spread particles across a wide area
+            posArray[i] = (Math.random() - 0.5) * 50; 
+        }
+
+        particlesGeometry.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+        const particlesMaterial = new THREE.PointsMaterial({
+            size: 0.05,
+            color: 0x00e5ff,
+            transparent: true,
+            opacity: 0.8,
+            blending: THREE.AdditiveBlending
+        });
+
+        const particlesMesh = new THREE.Points(particlesGeometry, particlesMaterial);
+        scene.add(particlesMesh);
+
+        // --- 3. ANIMATION LOOP ---
+        function animate() {
+            requestAnimationFrame(animate);
+            // Slowly rotate the galaxy of particles
+            particlesMesh.rotation.y += 0.001;
+            particlesMesh.rotation.x += 0.0005;
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        // --- 4. GSAP SCROLL MAGIC ---
+        gsap.registerPlugin(ScrollTrigger);
+
+        // When the user scrolls, push the camera deep into the Z-axis
+        gsap.to(camera.position, {
+            z: -20, // Fly forward through the particles
+            ease: "none",
+            scrollTrigger: {
+                trigger: ".content",
+                start: "top top",
+                end: "bottom bottom",
+                scrub: 1 // Makes the animation tied to the scrollbar
+            }
+        });
+
+        // Rotate the particles faster as you scroll
+        gsap.to(particlesMesh.rotation, {
+            z: 2, 
+            ease: "none",
+            scrollTrigger: {
+                trigger: ".content",
+                start: "top top",
+                end: "bottom bottom",
+                scrub: 1
+            }
+        });
+
+        // --- 5. HANDLE WINDOW RESIZE ---
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+</body>
+</html>
